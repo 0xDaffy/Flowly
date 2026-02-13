@@ -1,0 +1,260 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String      @id @default(cuid())
+  clerkId       String      @unique
+  email         String      @unique
+  name          String?
+  imageUrl      String?
+  workspaces    Workspace[]
+  members       Member[]
+  cards         Card[]      @relation("CardAssignee")
+  comments      Comment[]
+  activities    Activity[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Workspace {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  imageUrl    String?
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  projects    Project[]
+  members     Member[]
+  settings    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([ownerId])
+  @@index([slug])
+}
+
+model Member {
+  id          String    @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        MemberRole @default(MEMBER)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt    DateTime  @default(now())
+
+  @@unique([workspaceId, userId])
+  @@index([workspaceId])
+  @@index([userId])
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  color       String    @default("#3b82f6")
+  icon        String?
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  boards      Board[]
+  isFavorite  Boolean   @default(false)
+  isArchived  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([workspaceId])
+}
+
+model Board {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns     Column[]
+  isDefault   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+model Column {
+  id        String   @id @default(cuid())
+  name      String
+  color     String   @default("#6b7280")
+  position  Int
+  limit     Int?
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards     Card[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([boardId, position])
+  @@index([boardId])
+}
+
+model Card {
+  id          String      @id @default(cuid())
+  title       String
+  description String?     @db.Text
+  position    Float       @default(0)
+  priority    Priority    @default(MEDIUM)
+  dueDate     DateTime?
+  columnId    String
+  column      Column      @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  assignees   User[]      @relation("CardAssignee")
+  labels      Label[]
+  attachments Attachment[]
+  comments    Comment[]
+  activities  Activity[]
+  checkLists  CheckList[]
+  coverImage  String?
+  isArchived  Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([columnId])
+  @@index([position])
+}
+
+model Label {
+  id        String   @id @default(cuid())
+  name      String
+  color     String
+  cards     Card[]
+  createdAt DateTime @default(now())
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  size      Int
+  type      String
+  cardId    String
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([cardId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  cardId    String
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cardId])
+  @@index([userId])
+}
+
+model Activity {
+  id        String       @id @default(cuid())
+  type      ActivityType
+  content   String
+  cardId    String?
+  card      Card?        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  metadata  Json?
+  createdAt DateTime     @default(now())
+
+  @@index([cardId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model CheckList {
+  id        String          @id @default(cuid())
+  title     String
+  cardId    String
+  card      Card            @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  items     CheckListItem[]
+  position  Int
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([cardId])
+}
+
+model CheckListItem {
+  id          String    @id @default(cuid())
+  content     String
+  isCompleted Boolean   @default(false)
+  position    Int
+  checkListId String
+  checkList   CheckList @relation(fields: [checkListId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([checkListId])
+}
+
+model Subscription {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  stripeCustomerId   String   @unique
+  stripeSubscriptionId String? @unique
+  stripePriceId      String?
+  stripeCurrentPeriodEnd DateTime?
+  plan               Plan     @default(FREE)
+  status             SubscriptionStatus @default(ACTIVE)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+  @@index([stripeCustomerId])
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ActivityType {
+  CARD_CREATED
+  CARD_UPDATED
+  CARD_MOVED
+  CARD_ARCHIVED
+  CARD_DELETED
+  COMMENT_ADDED
+  MEMBER_ADDED
+  MEMBER_REMOVED
+  ATTACHMENT_ADDED
+  LABEL_ADDED
+}
+
+enum Plan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  INCOMPLETE
+  PAST_DUE
+  TRIALING
+}
