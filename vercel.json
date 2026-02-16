@@ -1,0 +1,31 @@
+{
+  "env": [
+    {
+      "key": "DATABASE_URL",
+      "description": "PostgreSQL database connection string (use Neon or similar)"
+    },
+    {
+      "key": "CLERK_SECRET_KEY",
+      "description": "Clerk authentication secret key"
+    },
+    {
+      "key": "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+      "description": "Clerk public key"
+    },
+    {
+      "key": "STRIPE_SECRET_KEY",
+      "description": "Stripe secret key"
+    },
+    {
+      "key": "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+      "description": "Stripe public key"
+    },
+    {
+      "key": "DEEPL_API_KEY",
+      "description": "DeepL translation API key"
+    }
+  ],
+  "buildCommand": "pnpm prisma generate && pnpm build",
+  "installCommand": "pnpm install",
+  "framework": "nextjs"
+}
