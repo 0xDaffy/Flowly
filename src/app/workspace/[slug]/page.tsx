@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { trpc } from '@/lib/trpc-client'
 import { notFound } from 'next/navigation'
 import { KanbanBoard } from '@/components/board/kanban-board'
@@ -9,15 +10,16 @@ import { useState } from 'react'
 import { CreateProjectDialog } from '@/components/workspace/create-project-dialog'
 
 interface WorkspacePageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export default function WorkspacePage({ params }: WorkspacePageProps) {
   const [showCreateProject, setShowCreateProject] = useState(false)
+  const awaitedParams = React.use(params)
   const { data: workspace, isLoading } = trpc.workspace.getBySlug.useQuery({ 
-    slug: params.slug 
+    slug: awaitedParams.slug 
   })
 
   if (isLoading) {

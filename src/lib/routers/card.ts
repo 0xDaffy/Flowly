@@ -2,6 +2,32 @@ import { z } from 'zod'
 import { router, protectedProcedure } from '../trpc'
 
 export const cardRouter = router({
+  getById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const card = await ctx.db.card.findUnique({
+        where: { id: input.id },
+        include: {
+          column: true,
+          assignees: true,
+          labels: true,
+          comments: {
+            include: {
+              user: true,
+            },
+          },
+          attachments: true,
+          activities: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      })
+
+      return card
+    }),
+
   create: protectedProcedure
     .input(
       z.object({

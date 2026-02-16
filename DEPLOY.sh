@@ -28,14 +28,18 @@ echo "✅ Clean"
 
 echo ""
 
-# Step 3: Deploy directly (this will prompt for project setup)
-echo "Step 3: Deploying to Vercel..."
+# Step 3: Install dependencies and build locally first to verify
+echo "Step 3: Installing dependencies..."
+pnpm install
+
 echo ""
-echo "When prompted:"
-echo "  - Set up and deploy? → Yes"
-echo "  - Which scope? → Select your account"
-echo "  - Link to existing project? → Yes (if you have one) or No"
-echo "  - What's your project's name? → flowly (or flowly3)"
+echo "Step 4: Building locally to verify..."
+pnpm build
+
+echo ""
+echo "Step 5: Deploying to Vercel..."
+echo ""
+echo "This will deploy your verified build to Vercel production"
 echo ""
 
 vercel --prod --yes
@@ -68,5 +72,19 @@ echo ""
 echo "5. NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"
 echo "   pk_test_51T1P4yF4I6lnNP2s8xGd1qTvmmsqsHtFazbt7f0Eg7JpQCPIvR8Pb9mRsKSLxDTXe0DuqG9fxuYFamrjdSLKqB3R00Nymr5Y2E"
 echo ""
-echo "Then redeploy: vercel --prod"
+echo "6. NEXT_PUBLIC_CLERK_SIGN_IN_URL"
+echo "   /sign-in"
+echo ""
+echo "7. NEXT_PUBLIC_CLERK_SIGN_UP_URL"
+echo "   /sign-up"
+echo ""
+echo "8. NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL"
+echo "   /dashboard"
+echo ""
+echo "9. NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL"
+echo "   /dashboard"
+echo ""
+echo "Check each variable for: ☑️ Production, Preview, Development"
+echo ""
+echo "Then the app will auto-redeploy with the env vars!"
 echo ""

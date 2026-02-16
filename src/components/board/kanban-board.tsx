@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { trpc } from '@/lib/trpc-client'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
@@ -52,6 +52,7 @@ interface ColumnProps {
 
 function Column({ column }: ColumnProps) {
   const [showCreateCard, setShowCreateCard] = useState(false)
+  const divRef = useRef<HTMLDivElement>(null)
   const utils = trpc.useContext()
   const moveCard = trpc.card.move.useMutation({
     onSuccess: () => {
@@ -72,9 +73,12 @@ function Column({ column }: ColumnProps) {
     },
   })
 
+  // Connect the drop target to the ref
+  drop(divRef)
+
   return (
     <div
-      ref={drop}
+      ref={divRef}
       className="bg-gray-100 rounded-lg p-4 w-80 flex-shrink-0 flex flex-col max-h-[calc(100vh-300px)]"
     >
       <div className="flex items-center justify-between mb-3">
@@ -126,6 +130,7 @@ interface KanbanCardProps {
 
 function KanbanCard({ card }: KanbanCardProps) {
   const [showDetail, setShowDetail] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
   
   const [{ isDragging }, drag] = useDrag({
     type: 'CARD',
@@ -134,6 +139,9 @@ function KanbanCard({ card }: KanbanCardProps) {
       isDragging: monitor.isDragging(),
     }),
   })
+
+  // Connect the drag source to the ref
+  drag(cardRef)
 
   const priorityColors = {
     LOW: 'bg-gray-200 text-gray-700',
@@ -144,10 +152,10 @@ function KanbanCard({ card }: KanbanCardProps) {
 
   return (
     <>
-      <Card
-        ref={drag}
+      <div
+        ref={cardRef}
         className={cn(
-          'p-3 cursor-move hover:shadow-md transition-shadow',
+          'p-3 cursor-move hover:shadow-md transition-shadow bg-white rounded-lg border',
           isDragging && 'opacity-50'
         )}
         onClick={() => setShowDetail(true)}
@@ -198,7 +206,7 @@ function KanbanCard({ card }: KanbanCardProps) {
             </div>
           )}
         </div>
-      </Card>
+      </div>
 
       <CardDetailDialog
         open={showDetail}

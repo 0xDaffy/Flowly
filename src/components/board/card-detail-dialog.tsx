@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { trpc } from '@/lib/trpc-client'
 import { Button } from '@/components/ui/button'
 import {
@@ -29,28 +29,36 @@ export function CardDetailDialog({ open, onOpenChange, cardId }: CardDetailDialo
   const [comment, setComment] = useState('')
 
   const utils = trpc.useContext()
-  const { data: card } = trpc.board.getById.useQuery(
+  const { data: card } = trpc.card.getById.useQuery(
     { id: cardId },
     { enabled: !!cardId }
   )
 
+  // Initialize state from card data
+  useEffect(() => {
+    if (card) {
+      setTitle(card.title || '')
+      setDescription(card.description || '')
+    }
+  }, [card])
+
   const updateCard = trpc.card.update.useMutation({
     onSuccess: () => {
-      utils.board.getById.invalidate()
+      utils.card.getById.invalidate()
       setIsEditing(false)
     },
   })
 
   const deleteCard = trpc.card.delete.useMutation({
     onSuccess: () => {
-      utils.board.getById.invalidate()
+      utils.card.getById.invalidate()
       onOpenChange(false)
     },
   })
 
   const addComment = trpc.card.addComment.useMutation({
     onSuccess: () => {
-      utils.board.getById.invalidate()
+      utils.card.getById.invalidate()
       setComment('')
     },
   })
@@ -124,7 +132,7 @@ export function CardDetailDialog({ open, onOpenChange, cardId }: CardDetailDialo
                     updateCard.mutate({
                       id: cardId,
                       title: title || card.title,
-                      description: description || card.description,
+                      description: description || card.description || undefined,
                     })
                   }}
                 >

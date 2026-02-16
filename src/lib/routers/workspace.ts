@@ -72,6 +72,11 @@ export const workspaceRouter = router({
             workspace: {
               include: {
                 owner: true,
+                members: {
+                  include: {
+                    user: true,
+                  },
+                },
                 projects: {
                   take: 5,
                 },
