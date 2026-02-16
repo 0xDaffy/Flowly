@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # 🚀 FLOWLY DEPLOYMENT - RUN THIS SCRIPT
-# Copy and paste these commands one by one in your terminal
 
 set -e
 
@@ -38,6 +37,11 @@ pnpm build
 
 echo ""
 echo "Step 5: Deploying to Vercel..."
+echo "Deploying with project name: flowly"
+echo ""
+
+# Deploy with explicit project name (must be lowercase)
+vercel --prod --yes --name flowly
 echo ""
 echo "This will deploy your verified build to Vercel production"
 echo ""
