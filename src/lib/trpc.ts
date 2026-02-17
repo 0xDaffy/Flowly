@@ -1,18 +1,16 @@
 import { initTRPC, TRPCError } from '@trpc/server'
-import { auth } from '@clerk/nextjs/server'
 import { db } from './db'
 import superjson from 'superjson'
 
 interface CreateContextOptions {
   req?: Request
+  userId?: string | null
 }
 
 export const createTRPCContext = async (opts?: CreateContextOptions) => {
-  const { userId } = await auth()
-  
   return {
     db,
-    userId,
+    userId: opts?.userId || null,
   }
 }
 
