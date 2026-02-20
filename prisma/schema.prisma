@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -32,7 +32,7 @@ model Workspace {
   owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   projects    Project[]
   members     Member[]
-  settings    Json?
+  settings    String?   // JSON stored as string
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -44,7 +44,7 @@ model Member {
   id          String    @id @default(cuid())
   workspaceId String
   userId      String
-  role        MemberRole @default(MEMBER)
+  role        String    @default("MEMBER") // OWNER, ADMIN, MEMBER, GUEST
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   joinedAt    DateTime  @default(now())
@@ -104,9 +104,9 @@ model Column {
 model Card {
   id          String      @id @default(cuid())
   title       String
-  description String?     @db.Text
+  description String?
   position    Float       @default(0)
-  priority    Priority    @default(MEDIUM)
+  priority    String      @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
   dueDate     DateTime?
   columnId    String
   column      Column      @relation(fields: [columnId], references: [id], onDelete: Cascade)
@@ -148,7 +148,7 @@ model Attachment {
 
 model Comment {
   id        String   @id @default(cuid())
-  content   String   @db.Text
+  content   String
   cardId    String
   card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
   userId    String
@@ -161,15 +161,15 @@ model Comment {
 }
 
 model Activity {
-  id        String       @id @default(cuid())
-  type      ActivityType
+  id        String   @id @default(cuid())
+  type      String   // CARD_CREATED, CARD_UPDATED, CARD_MOVED, CARD_ARCHIVED, CARD_DELETED, COMMENT_ADDED, MEMBER_ADDED, MEMBER_REMOVED, ATTACHMENT_ADDED, LABEL_ADDED
   content   String
   cardId    String?
-  card      Card?        @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  card      Card?    @relation(fields: [cardId], references: [id], onDelete: Cascade)
   userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  metadata  Json?
-  createdAt DateTime     @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  metadata  String?  // JSON stored as string
+  createdAt DateTime @default(now())
 
   @@index([cardId])
   @@index([userId])
@@ -209,8 +209,8 @@ model Subscription {
   stripeSubscriptionId String? @unique
   stripePriceId      String?
   stripeCurrentPeriodEnd DateTime?
-  plan               Plan     @default(FREE)
-  status             SubscriptionStatus @default(ACTIVE)
+  plan               String   @default("FREE") // FREE, PRO, ENTERPRISE
+  status             String   @default("ACTIVE") // ACTIVE, CANCELED, INCOMPLETE, PAST_DUE, TRIALING
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -218,43 +218,4 @@ model Subscription {
   @@index([stripeCustomerId])
 }
 
-enum MemberRole {
-  OWNER
-  ADMIN
-  MEMBER
-  GUEST
-}
 
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}
-
-enum ActivityType {
-  CARD_CREATED
-  CARD_UPDATED
-  CARD_MOVED
-  CARD_ARCHIVED
-  CARD_DELETED
-  COMMENT_ADDED
-  MEMBER_ADDED
-  MEMBER_REMOVED
-  ATTACHMENT_ADDED
-  LABEL_ADDED
-}
-
-enum Plan {
-  FREE
-  PRO
-  ENTERPRISE
-}
-
-enum SubscriptionStatus {
-  ACTIVE
-  CANCELED
-  INCOMPLETE
-  PAST_DUE
-  TRIALING
-}

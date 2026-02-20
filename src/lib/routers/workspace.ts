@@ -12,14 +12,20 @@ export const workspaceRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { clerkId: ctx.userId },
-      })
-
-      if (!user) {
+      let user: any
+      try {
+        user = await ctx.db.user.upsert({
+          where: { clerkId: ctx.userId },
+          update: {},
+          create: {
+            clerkId: ctx.userId,
+            email: `${ctx.userId}@placeholder.local`, // Placeholder - to be updated by webhook
+          },
+        })
+      } catch (error) {
         throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'User not found',
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create or retrieve user',
         })
       }
 
@@ -52,40 +58,51 @@ export const workspaceRouter = router({
     }),
 
   getAll: protectedProcedure.query(async ({ ctx }) => {
-    const user = await ctx.db.user.findUnique({
-      where: { clerkId: ctx.userId },
-      include: {
-        workspaces: {
-          include: {
-            members: {
-              include: {
-                user: true,
+    let user: any
+    try {
+      user = await ctx.db.user.upsert({
+        where: { clerkId: ctx.userId },
+        update: {},
+        create: {
+          clerkId: ctx.userId,
+          email: `${ctx.userId}@placeholder.local`,
+        },
+        include: {
+          workspaces: {
+            include: {
+              members: {
+                include: {
+                  user: true,
+                },
+              },
+              projects: {
+                take: 5,
               },
             },
-            projects: {
-              take: 5,
-            },
           },
-        },
-        members: {
-          include: {
-            workspace: {
-              include: {
-                owner: true,
-                projects: {
-                  take: 5,
+          members: {
+            include: {
+              workspace: {
+                include: {
+                  owner: true,
+                  members: {
+                    include: {
+                      user: true,
+                    },
+                  },
+                  projects: {
+                    take: 5,
+                  },
                 },
               },
             },
           },
         },
-      },
-    })
-
-    if (!user) {
+      })
+    } catch (error) {
       throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'User not found',
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to create or retrieve user',
       })
     }
 

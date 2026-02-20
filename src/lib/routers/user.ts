@@ -1,19 +1,33 @@
 import { z } from 'zod'
 import { router, protectedProcedure } from '../trpc'
+import { TRPCError } from '@trpc/server'
 
 export const userRouter = router({
   getCurrent: protectedProcedure.query(async ({ ctx }) => {
-    const user = await ctx.db.user.findUnique({
-      where: { clerkId: ctx.userId },
-      include: {
-        workspaces: true,
-        members: {
-          include: {
-            workspace: true,
+    let user: any
+    try {
+      user = await ctx.db.user.upsert({
+        where: { clerkId: ctx.userId },
+        update: {},
+        create: {
+          clerkId: ctx.userId,
+          email: `${ctx.userId}@placeholder.local`,
+        },
+        include: {
+          workspaces: true,
+          members: {
+            include: {
+              workspace: true,
+            },
           },
         },
-      },
-    })
+      })
+    } catch (error) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to create or retrieve user',
+      })
+    }
 
     return user
   }),
