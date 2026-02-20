@@ -3,7 +3,6 @@ import { db } from './db'
 import superjson from 'superjson'
 
 interface CreateContextOptions {
-  req?: Request
   userId?: string | null
 }
 
